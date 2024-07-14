@@ -1100,6 +1100,12 @@ public class SoundLib {
 			}
 		}
 
+		public void broadcastSound(float volume) {
+			for (Player player : Bukkit.getOnlinePlayers()) {
+				this.playSound(player, volume, 1f);
+			}
+		}
+
 		public void stopSound(Player player) {
 			if (this.sound != null) {
 				player.stopSound(this.sound);
