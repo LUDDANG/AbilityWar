@@ -1,5 +1,7 @@
 **Copyright © 2020 Daybreak 새벽**
 
+**Customized by [Eunhak Lee](https://github.com/return0927) @LUDDANG**
+
 ### 권한
 ✔️ 플러그인의 수정을 허용합니다.<br>
 ✔️ 플러그인의 배포를 허용합니다.<br>

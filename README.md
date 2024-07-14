@@ -2,6 +2,7 @@
 <img src="https://img.shields.io/github/v/release/DayBreak365/AbilityWar?style=flat-square"></img>
 <img src="https://img.shields.io/github/last-commit/DayBreak365/AbilityWar?style=flat-square"></img>
 ### 개발: [Daybreak](https://github.com/DayBreak365)
+### 일부 수정: [Eunhak Lee](https://github.com/return0927)
 <br/>
 
 **📋 License**
