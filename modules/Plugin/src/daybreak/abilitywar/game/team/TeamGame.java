@@ -37,15 +37,7 @@ import org.bukkit.projectiles.ProjectileSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class TeamGame extends Game implements Teamable {
 
@@ -92,8 +84,10 @@ public abstract class TeamGame extends Game implements Teamable {
 			@Override
 			public void update(GameUpdate update) {
 				switch (update) {
-					case START:
+					case PRE:
 						teamPreset.getDivisionType().divide(TeamGame.this, teamPreset);
+						break;
+					case START:
 						if (Settings.getSpawnEnable()) {
 							final Location spawn = Settings.getSpawnLocation().toBukkitLocation();
 							for (Participant participant : getParticipants()) {
@@ -125,7 +119,11 @@ public abstract class TeamGame extends Game implements Teamable {
 							recipients.add(participant.getPlayer());
 						}
 					} else if (team != null) {
-						e.setFormat(ChatColor.WHITE + "[" + team.getDisplayName() + ChatColor.WHITE + "] " + e.getFormat());
+						String prefix = ChatColor.WHITE + "[" + team.getDisplayName() + ChatColor.WHITE + "]";
+						if (team.getDisplayName().contains("[") && team.getDisplayName().contains("]"))
+							prefix = team.getDisplayName();
+						if (!prefix.endsWith(" ")) prefix += ChatColor.RESET + " ";
+						e.setFormat(prefix + e.getFormat());
 					}
 				}
 			}

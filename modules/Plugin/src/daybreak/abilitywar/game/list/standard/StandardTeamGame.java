@@ -14,6 +14,7 @@ import daybreak.abilitywar.utils.base.Seasons;
 import daybreak.abilitywar.utils.base.minecraft.PlayerCollector;
 import daybreak.abilitywar.utils.library.SoundLib;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.World;
 
 import javax.naming.OperationNotSupportedException;
@@ -31,11 +32,12 @@ public class StandardTeamGame extends TeamGame implements DefaultKitHandler {
 	protected void progressGame(int seconds) {
 		switch (seconds) {
 			case 1:
+				preStartGame();
 				List<String> lines = Messager.asList("§6==== §e게임 참여자 목록 §6====");
 				int count = 0;
 				for (Participant p : getParticipants()) {
 					count++;
-					lines.add("§a" + count + ". §f" + p.getPlayer().getName());
+					lines.add("§a" + count + ". §f" + p.getTeam().getDisplayName() + ChatColor.RESET + p.getPlayer().getName());
 				}
 				lines.add("§e총 인원수 : " + count + "명");
 				lines.add("§6===========================");

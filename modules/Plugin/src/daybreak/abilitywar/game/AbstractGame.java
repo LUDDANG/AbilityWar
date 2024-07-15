@@ -38,12 +38,7 @@ import daybreak.abilitywar.utils.base.io.FileUtil;
 import daybreak.abilitywar.utils.base.logging.Logger;
 import daybreak.abilitywar.utils.base.minecraft.boundary.BoundingBox;
 import daybreak.abilitywar.utils.base.minecraft.nms.NMS;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -61,18 +56,8 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.UUID;
 import java.util.function.Predicate;
 
 public abstract class AbstractGame extends SimpleTimer implements IGame, Listener, CommandHandler {
@@ -85,7 +70,9 @@ public abstract class AbstractGame extends SimpleTimer implements IGame, Listene
 		void update(GameUpdate update);
 	}
 
-	public enum GameUpdate {START, END}
+	protected void preStartGame() {
+		observers.forEach(observer -> observer.update(GameUpdate.PRE));
+	}
 
 	private final Set<AbstractGame.Observer> observers = new HashSet<>();
 
@@ -262,6 +249,8 @@ public abstract class AbstractGame extends SimpleTimer implements IGame, Listene
 	public boolean isGameStarted() {
 		return gameStarted;
 	}
+
+	public enum GameUpdate {PRE, START, END}
 
 	protected void startGame() {
 		this.gameStarted = true;
