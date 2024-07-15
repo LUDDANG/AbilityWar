@@ -500,6 +500,11 @@ public abstract class AbstractGame extends SimpleTimer implements IGame, Listene
 		public class Attributes {
 			public final Attribute<Boolean> TEAM_CHAT = new Attribute<>(false);
 			public final Attribute<Boolean> TARGETABLE = new Attribute<>(true);
+
+			/**
+			 * 특정 인원은 확정적으로 S 클래스 능력을 뽑도록 하는 Attribute
+			 */
+			public final Attribute<Boolean> SUPER_PLAYER = new Attribute<>(false);
 		}
 
 		public class Attribute<T> {

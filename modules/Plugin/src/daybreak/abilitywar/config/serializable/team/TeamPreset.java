@@ -160,6 +160,8 @@ public class TeamPreset implements ConfigurationSerializable {
 						final Members team = game.newTeam(scheme.getName(), scheme.getDisplayName());
 						team.setSpawn(scheme.getSpawn());
 
+						boolean isLeaderPopped = false;
+
 						for (JsonElement jsonElement : map.getAsJsonArray(teamName)) {
 							String playerName = jsonElement.getAsString();
 							Player player = Bukkit.getPlayer(playerName);
@@ -169,7 +171,12 @@ public class TeamPreset implements ConfigurationSerializable {
 								continue;
 							}
 
-							game.setTeam(game.getParticipant(player), team);
+							Participant participant = game.getParticipant(player);
+							if (!isLeaderPopped) {
+								participant.attributes().SUPER_PLAYER.setValue(true);
+								isLeaderPopped = true;
+							}
+							game.setTeam(participant, team);
 						}
 					}
 				} catch (Exception e) {

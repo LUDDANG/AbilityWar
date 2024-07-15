@@ -37,7 +37,7 @@ public class StandardTeamGame extends TeamGame implements DefaultKitHandler {
 				int count = 0;
 				for (Participant p : getParticipants()) {
 					count++;
-					lines.add("§a" + count + ". §f" + p.getTeam().getDisplayName() + ChatColor.RESET + p.getPlayer().getName());
+                    lines.add("§a" + count + ". §f" + p.getTeam().getDisplayName() + ChatColor.RESET + (p.attributes().SUPER_PLAYER.getValue() ? ChatColor.UNDERLINE : "") + p.getPlayer().getName());
 				}
 				lines.add("§e총 인원수 : " + count + "명");
 				lines.add("§6===========================");
