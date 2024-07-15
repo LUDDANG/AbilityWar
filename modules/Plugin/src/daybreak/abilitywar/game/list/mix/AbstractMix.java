@@ -33,12 +33,7 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class AbstractMix extends Game implements DefaultKitHandler {
 
@@ -215,7 +210,6 @@ public abstract class AbstractMix extends Game implements DefaultKitHandler {
 				}
 				if (count == 0) sender.sendMessage("§f능력자가 발견되지 않았습니다.");
 				sender.sendMessage("§2========================");
-				Bukkit.broadcastMessage("§f" + sender.getName() + "§a님이 참가자들의 능력을 확인하였습니다.");
 			}
 			break;
 			case TIP_CHECK: {

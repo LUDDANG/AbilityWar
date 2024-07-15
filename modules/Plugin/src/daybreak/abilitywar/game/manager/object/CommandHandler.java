@@ -98,8 +98,6 @@ public interface CommandHandler {
 				if (count == 0) sender.sendMessage("§f능력자가 발견되지 않았습니다.");
 
 				sender.sendMessage("§2========================");
-
-				Bukkit.broadcastMessage("§f" + sender.getName() + "§a님이 참가자들의 능력을 확인하였습니다.");
 			}
 			break;
 			case ABILITY_CHECK: {
