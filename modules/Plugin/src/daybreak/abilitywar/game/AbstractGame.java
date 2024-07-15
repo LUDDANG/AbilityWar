@@ -298,6 +298,10 @@ public abstract class AbstractGame extends SimpleTimer implements IGame, Listene
 		private @NotNull Player player;
 		private final Listener listener;
 
+		public boolean isSuperPlayer() {
+			return attributes().SUPER_PLAYER.getValue();
+		}
+
 		protected Participant(@NotNull Player player) {
 			this.player = player;
 			this.listener = new Listener() {

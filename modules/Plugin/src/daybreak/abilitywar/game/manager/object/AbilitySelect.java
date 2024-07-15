@@ -198,24 +198,60 @@ public abstract class AbilitySelect extends GameTimer {
 		}
 	}
 
-	private static final class SelectorData {
-
-		private final Collection<? extends Participant> selectors;
-		private final int changeCount;
-
-		private SelectorData(Collection<? extends Participant> selectors, int changeCount) {
-			this.selectors = selectors;
-			this.changeCount = changeCount;
-		}
-
-		private Map<Participant, Integer> newMap() {
-			Map<Participant, Integer> map = new HashMap<>();
-			for (Participant participant : selectors) {
-				map.put(participant, changeCount);
+	public interface AbilityCollector {
+		AbilityCollector EVERY_ABILITY_EXCLUDING_BLACKLISTED = new AbilityCollector() {
+			@Override
+			public List<Class<? extends AbilityBase>> collect(Class<? extends AbstractGame> game) {
+				final List<Class<? extends AbilityBase>> abilities = new ArrayList<>();
+				for (AbilityRegistration registration : (Settings.isLiteModeEnabled() ? LiteAbilities.values() : AbilityList.values())) {
+					if (!Settings.isBlacklisted(registration.getManifest().name()) && registration.isAvailable(game) && (Settings.isUsingBetaAbility() || !registration.hasFlag(Flag.BETA))) {
+						abilities.add(registration.getAbilityClass());
+					}
+				}
+				return abilities;
 			}
-			return map;
-		}
+		};
 
+		AbilityCollector EVERY_S_ABILITY_EXCLUDING_BLACKLISTED = new AbilityCollector() {
+			@Override
+			public List<Class<? extends AbilityBase>> collect(Class<? extends AbstractGame> game) {
+				final List<Class<? extends AbilityBase>> abilities = new ArrayList<>();
+				for (AbilityRegistration registration : (Settings.isLiteModeEnabled() ? LiteAbilities.values() : AbilityList.values())) {
+					switch (registration.getManifest().rank()) {
+						case A:
+						case B:
+						case C:
+							continue;
+					}
+					if (!Settings.isBlacklisted(registration.getManifest().name()) && registration.isAvailable(game) && (Settings.isUsingBetaAbility() || !registration.hasFlag(Flag.BETA))) {
+						abilities.add(registration.getAbilityClass());
+					}
+				}
+				return abilities;
+			}
+		};
+
+		AbilityCollector EVERY_NOT_TO_COMMON_ABILITY_EXCLUDING_BLACKLISTED = new AbilityCollector() {
+			@Override
+			public List<Class<? extends AbilityBase>> collect(Class<? extends AbstractGame> game) {
+				final List<Class<? extends AbilityBase>> abilities = new ArrayList<>();
+				for (AbilityRegistration registration : (Settings.isLiteModeEnabled() ? LiteAbilities.values() : AbilityList.values())) {
+					switch (registration.getManifest().rank()) {
+						case A:
+						case B:
+							break;
+						default:
+							continue;
+					}
+					if (!Settings.isBlacklisted(registration.getManifest().name()) && registration.isAvailable(game) && (Settings.isUsingBetaAbility() || !registration.hasFlag(Flag.BETA))) {
+						abilities.add(registration.getAbilityClass());
+					}
+				}
+				return abilities;
+			}
+		};
+
+		List<Class<? extends AbilityBase>> collect(final Class<? extends AbstractGame> game);
 	}
 
 	@Override
@@ -256,40 +292,24 @@ public abstract class AbilitySelect extends GameTimer {
 		void startAbilitySelect() throws OperationNotSupportedException;
 	}
 
-	public interface AbilityCollector {
-		AbilityCollector EVERY_ABILITY_EXCLUDING_BLACKLISTED = new AbilityCollector() {
-			@Override
-			public List<Class<? extends AbilityBase>> collect(Class<? extends AbstractGame> game) {
-				final List<Class<? extends AbilityBase>> abilities = new ArrayList<>();
-				for (AbilityRegistration registration : (Settings.isLiteModeEnabled() ? LiteAbilities.values() : AbilityList.values())) {
-					if (!Settings.isBlacklisted(registration.getManifest().name()) && registration.isAvailable(game) && (Settings.isUsingBetaAbility() || !registration.hasFlag(Flag.BETA))) {
-						abilities.add(registration.getAbilityClass());
-					}
-				}
-				return abilities;
-			}
-		};
+	private static final class SelectorData {
 
-		AbilityCollector EVERY_S_ABILITY_EXCLUDING_BLACKLISTED = new AbilityCollector() {
-			@Override
-			public List<Class<? extends AbilityBase>> collect(Class<? extends AbstractGame> game) {
-				final List<Class<? extends AbilityBase>> abilities = new ArrayList<>();
-				for (AbilityRegistration registration : (Settings.isLiteModeEnabled() ? LiteAbilities.values() : AbilityList.values())) {
-					switch (registration.getManifest().rank()) {
-						case A:
-						case B:
-						case C:
-							continue;
-					}
-					if (!Settings.isBlacklisted(registration.getManifest().name()) && registration.isAvailable(game) && (Settings.isUsingBetaAbility() || !registration.hasFlag(Flag.BETA))) {
-						abilities.add(registration.getAbilityClass());
-					}
-				}
-				return abilities;
-			}
-		};
+		private final Collection<? extends Participant> selectors;
+		private final int changeCount;
 
-		List<Class<? extends AbilityBase>> collect(final Class<? extends AbstractGame> game);
+		private SelectorData(Collection<? extends Participant> selectors, int changeCount) {
+			this.selectors = selectors;
+			this.changeCount = changeCount;
+		}
+
+		private Map<Participant, Integer> newMap() {
+			Map<Participant, Integer> map = new HashMap<>();
+			for (Participant participant : selectors) {
+				map.put(participant, participant.isSuperPlayer() ? 0 : changeCount);
+			}
+			return map;
+		}
+
 	}
 
 	public class AutoSkip extends GameTimer implements Listener {

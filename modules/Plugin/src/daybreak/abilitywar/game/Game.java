@@ -158,7 +158,7 @@ public abstract class Game extends AbstractGame implements AbilitySelect.Handler
 
 			@Override
 			protected void drawAbility(Collection<? extends Participant> selectors) {
-				abilities = AbilityCollector.EVERY_ABILITY_EXCLUDING_BLACKLISTED.collect(Game.this.getClass());
+				abilities = AbilityCollector.EVERY_NOT_TO_COMMON_ABILITY_EXCLUDING_BLACKLISTED.collect(Game.this.getClass());
 				specialAbilities = AbilityCollector.EVERY_S_ABILITY_EXCLUDING_BLACKLISTED.collect(Game.this.getClass());
 
 				Random random = new Random();
@@ -171,9 +171,9 @@ public abstract class Game extends AbstractGame implements AbilitySelect.Handler
 				}
 
 				for (Participant participant : selectors) {
-					List<Class<? extends AbilityBase>> ablist = (participant.attributes().SUPER_PLAYER.getValue() ? specialAbilities : abilities);
+					List<Class<? extends AbilityBase>> ablist = (participant.isSuperPlayer() ? specialAbilities : abilities);
 					Class<? extends AbilityBase> abilityClass = ablist.get(random.nextInt(ablist.size()));
-					boolean removing = (participant.attributes().SUPER_PLAYER.getValue()) ? removingSpecial : removingNormal;
+					boolean removing = participant.isSuperPlayer() ? removingSpecial : removingNormal;
 
 					try {
 						participant.setAbility(abilityClass);
@@ -202,7 +202,7 @@ public abstract class Game extends AbstractGame implements AbilitySelect.Handler
 			@Override
 			protected boolean changeAbility(Participant participant) {
 				Player p = participant.getPlayer();
-				List<Class<? extends AbilityBase>> ablist = (participant.attributes().SUPER_PLAYER.getValue() ? specialAbilities : abilities);
+				List<Class<? extends AbilityBase>> ablist = participant.isSuperPlayer() ? specialAbilities : abilities;
 
 				if (!ablist.isEmpty()) {
 					Random random = new Random();
