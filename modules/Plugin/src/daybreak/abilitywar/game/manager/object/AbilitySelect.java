@@ -27,12 +27,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import javax.naming.OperationNotSupportedException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class AbilitySelect extends GameTimer {
 
@@ -267,6 +262,25 @@ public abstract class AbilitySelect extends GameTimer {
 			public List<Class<? extends AbilityBase>> collect(Class<? extends AbstractGame> game) {
 				final List<Class<? extends AbilityBase>> abilities = new ArrayList<>();
 				for (AbilityRegistration registration : (Settings.isLiteModeEnabled() ? LiteAbilities.values() : AbilityList.values())) {
+					if (!Settings.isBlacklisted(registration.getManifest().name()) && registration.isAvailable(game) && (Settings.isUsingBetaAbility() || !registration.hasFlag(Flag.BETA))) {
+						abilities.add(registration.getAbilityClass());
+					}
+				}
+				return abilities;
+			}
+		};
+
+		AbilityCollector EVERY_S_ABILITY_EXCLUDING_BLACKLISTED = new AbilityCollector() {
+			@Override
+			public List<Class<? extends AbilityBase>> collect(Class<? extends AbstractGame> game) {
+				final List<Class<? extends AbilityBase>> abilities = new ArrayList<>();
+				for (AbilityRegistration registration : (Settings.isLiteModeEnabled() ? LiteAbilities.values() : AbilityList.values())) {
+					switch (registration.getManifest().rank()) {
+						case A:
+						case B:
+						case C:
+							continue;
+					}
 					if (!Settings.isBlacklisted(registration.getManifest().name()) && registration.isAvailable(game) && (Settings.isUsingBetaAbility() || !registration.hasFlag(Flag.BETA))) {
 						abilities.add(registration.getAbilityClass());
 					}

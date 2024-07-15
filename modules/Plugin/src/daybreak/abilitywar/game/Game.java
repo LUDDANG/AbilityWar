@@ -9,12 +9,7 @@ import daybreak.abilitywar.config.Configuration.Settings;
 import daybreak.abilitywar.game.ParticipantStrategy.DefaultManagement;
 import daybreak.abilitywar.game.event.participant.ParticipantAbilitySetEvent;
 import daybreak.abilitywar.game.manager.object.AbilitySelect;
-import daybreak.abilitywar.game.module.DeathManager;
-import daybreak.abilitywar.game.module.Firewall;
-import daybreak.abilitywar.game.module.Invincibility;
-import daybreak.abilitywar.game.module.ScoreboardManager;
-import daybreak.abilitywar.game.module.Wreck;
-import daybreak.abilitywar.game.module.ZeroTick;
+import daybreak.abilitywar.game.module.*;
 import daybreak.abilitywar.music.MusicRadio;
 import daybreak.abilitywar.music.Songs;
 import daybreak.abilitywar.utils.base.Messager;
@@ -159,80 +154,66 @@ public abstract class Game extends AbstractGame implements AbilitySelect.Handler
 
 			private List<Class<? extends AbilityBase>> abilities;
 
+			private List<Class<? extends AbilityBase>> specialAbilities;
+
 			@Override
 			protected void drawAbility(Collection<? extends Participant> selectors) {
 				abilities = AbilityCollector.EVERY_ABILITY_EXCLUDING_BLACKLISTED.collect(Game.this.getClass());
-				if (getSelectors().size() <= abilities.size()) {
-					Random random = new Random();
+				specialAbilities = AbilityCollector.EVERY_S_ABILITY_EXCLUDING_BLACKLISTED.collect(Game.this.getClass());
 
-					for (Participant participant : selectors) {
-						Class<? extends AbilityBase> abilityClass = abilities.get(random.nextInt(abilities.size()));
-						try {
-							participant.setAbility(abilityClass);
-							final AbilityBase ability = participant.getAbility();
-							abilities.remove(abilityClass);
+				Random random = new Random();
+				boolean removingNormal = getSelectors().size() <= abilities.size();
+				boolean removingSpecial = getSelectors().size() <= specialAbilities.size();
 
-							final Player player = participant.getPlayer();
-							player.sendMessage("§a능력이 할당되었습니다. §e/aw check§f로 확인하세요.");
-							if (!hasDecided(participant)) {
-								player.sendMessage("§e/aw yes §f명령어로 능력을 확정하거나, §e/aw no §f명령어로 능력을 변경하세요.");
-							}
-							final Tip tip = ability.getRegistration().getTip();
-							if (tip != null) {
-								player.sendMessage("§e/aw abtip§f으로 능력 팁을 확인하세요.");
-							}
-							if (ability.hasSummarize()) {
-								player.sendMessage("§e/aw sum§f으로 능력 요약을 확인하세요.");
-							}
-						} catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
-							logger.error(ChatColor.YELLOW + participant.getPlayer().getName() + ChatColor.WHITE + "님에게 능력을 할당하는 도중 오류가 발생하였습니다.");
-							logger.error("문제가 발생한 능력: " + ChatColor.AQUA + abilityClass.getName());
-						}
-					}
-				} else if (abilities.size() > 0) {
-					Random random = new Random();
-
-					for (Participant participant : selectors) {
-						Class<? extends AbilityBase> abilityClass = abilities.get(random.nextInt(abilities.size()));
-						try {
-							participant.setAbility(abilityClass);
-							final AbilityBase ability = participant.getAbility();
-							final Player player = participant.getPlayer();
-							player.sendMessage("§a능력이 할당되었습니다. §e/aw check§f로 확인하세요.");
-							if (!hasDecided(participant)) {
-								player.sendMessage("§e/aw yes §f명령어로 능력을 확정하거나, §e/aw no §f명령어로 능력을 변경하세요.");
-							}
-							final Tip tip = ability.getRegistration().getTip();
-							if (tip != null) {
-								player.sendMessage("§e/aw abtip§f으로 능력 팁을 확인하세요.");
-							}
-							if (ability.hasSummarize()) {
-								player.sendMessage("§e/aw sum§f으로 능력 요약을 확인하세요.");
-							}
-						} catch (SecurityException | ReflectiveOperationException | IllegalArgumentException e) {
-							logger.error(ChatColor.YELLOW + participant.getPlayer().getName() + ChatColor.WHITE + "님에게 능력을 할당하는 도중 오류가 발생하였습니다.");
-							logger.error("문제가 발생한 능력: " + ChatColor.AQUA + abilityClass.getName());
-						}
-					}
-				} else {
-					Messager.broadcastErrorMessage("사용 가능한 능력이 없습니다.");
+				if (abilities.isEmpty() || specialAbilities.isEmpty()) {
+					Messager.broadcastErrorMessage("사용 가능한 능력이 부족합니다.");
 					GameManager.stopGame();
+				}
+
+				for (Participant participant : selectors) {
+					List<Class<? extends AbilityBase>> ablist = (participant.attributes().SUPER_PLAYER.getValue() ? specialAbilities : abilities);
+					Class<? extends AbilityBase> abilityClass = ablist.get(random.nextInt(ablist.size()));
+					boolean removing = (participant.attributes().SUPER_PLAYER.getValue()) ? removingSpecial : removingNormal;
+
+					try {
+						participant.setAbility(abilityClass);
+						final AbilityBase ability = participant.getAbility();
+						if (removing) ablist.remove(abilityClass);
+
+						final Player player = participant.getPlayer();
+						player.sendMessage("§a능력이 할당되었습니다. §e/aw check§f로 확인하세요.");
+						if (!hasDecided(participant)) {
+							player.sendMessage("§e/aw yes §f명령어로 능력을 확정하거나, §e/aw no §f명령어로 능력을 변경하세요.");
+						}
+						final Tip tip = ability.getRegistration().getTip();
+						if (tip != null) {
+							player.sendMessage("§e/aw abtip§f으로 능력 팁을 확인하세요.");
+						}
+						if (ability.hasSummarize()) {
+							player.sendMessage("§e/aw sum§f으로 능력 요약을 확인하세요.");
+						}
+					} catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
+						logger.error(ChatColor.YELLOW + participant.getPlayer().getName() + ChatColor.WHITE + "님에게 능력을 할당하는 도중 오류가 발생하였습니다.");
+						logger.error("문제가 발생한 능력: " + ChatColor.AQUA + abilityClass.getName());
+					}
 				}
 			}
 
 			@Override
 			protected boolean changeAbility(Participant participant) {
 				Player p = participant.getPlayer();
+				List<Class<? extends AbilityBase>> ablist = (participant.attributes().SUPER_PLAYER.getValue() ? specialAbilities : abilities);
 
-				if (abilities.size() > 0) {
+				if (!ablist.isEmpty()) {
 					Random random = new Random();
 
 					if (participant.hasAbility()) {
 						Class<? extends AbilityBase> oldAbilityClass = participant.getAbility().getClass();
-						Class<? extends AbilityBase> abilityClass = abilities.get(random.nextInt(abilities.size()));
+						Class<? extends AbilityBase> abilityClass = ablist.get(random.nextInt(ablist.size()));
+
 						try {
-							abilities.remove(abilityClass);
-							abilities.add(oldAbilityClass);
+							ablist.remove(abilityClass);
+							ablist.add(oldAbilityClass);
 
 							participant.setAbility(abilityClass);
 
