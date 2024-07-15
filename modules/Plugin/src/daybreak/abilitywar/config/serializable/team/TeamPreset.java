@@ -2,24 +2,27 @@ package daybreak.abilitywar.config.serializable.team;
 
 import com.google.common.base.Enums;
 import com.google.common.base.Preconditions;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import daybreak.abilitywar.config.Configuration.Settings;
 import daybreak.abilitywar.config.serializable.SpawnLocation;
 import daybreak.abilitywar.game.AbstractGame.Participant;
 import daybreak.abilitywar.game.team.interfaces.Members;
 import daybreak.abilitywar.game.team.interfaces.Teamable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.*;
 
 public class TeamPreset implements ConfigurationSerializable {
 
@@ -122,6 +125,63 @@ public class TeamPreset implements ConfigurationSerializable {
 				}
 			}
 
+			public DivisionType next() {
+				return FIXED;
+			}
+		},
+		FIXED("P4GE 진행", "P4GE 서버에서 팀 분배 정보를 받아옵니다") {
+			@Override
+			public void divide(Teamable game, TeamPreset preset) {
+				JsonObject map;
+
+				try {
+					URL url = new URL("https://mirror.enak.kr/meechu/page/abwar.json");
+					URLConnection conn = url.openConnection();
+					conn.connect();
+
+					BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+					map = JsonParser.parseReader(reader).getAsJsonObject();
+				} catch (IOException e) {
+					Bukkit.getLogger().warning("플레이어 분배 정보를 받아오는 데 문제가 발생했습니다. 팀 분배는 무작위로 배정합니다.");
+					e.printStackTrace(System.err);
+
+					EQUAL.divide(game, preset);
+					return;
+				}
+
+				try {
+					for (String teamName : map.keySet()) {
+						final TeamScheme scheme = preset.getScheme(teamName);
+						if (scheme == null) {
+							Bukkit.getLogger().warning(String.format("팀 %s 을 찾을 수 없습니다.", teamName));
+							continue;
+						}
+
+						final Members team = game.newTeam(scheme.getName(), scheme.getDisplayName());
+						team.setSpawn(scheme.getSpawn());
+
+						for (JsonElement jsonElement : map.getAsJsonArray(teamName)) {
+							String playerName = jsonElement.getAsString();
+							Player player = Bukkit.getPlayer(playerName);
+
+							if (player == null) {
+								Bukkit.getLogger().warning(String.format("플레이어 %s 를 찾을 수 없어서 팀을 %s 로 설정을 못 했습니다.", playerName, teamName));
+								continue;
+							}
+
+							game.setTeam(game.getParticipant(player), team);
+						}
+					}
+				} catch (Exception e) {
+					Bukkit.getLogger().warning("플레이어를 분배하는 중에 오류가 발생했습니다. 팀 분배는 무작위로 배정합니다.");
+					e.printStackTrace(System.err);
+
+					EQUAL.divide(game, preset);
+					return;
+				}
+			}
+
+			@Override
 			public DivisionType next() {
 				return EQUAL;
 			}
