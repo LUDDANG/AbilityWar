@@ -135,7 +135,7 @@ public class TeamPreset implements ConfigurationSerializable {
 				JsonObject map;
 
 				try {
-					URL url = new URL("https://mirror.enak.kr/meechu/page/abwar.json");
+					URL url = new URL("https://mirror.enak.kr/meechu/page/" + preset.name + ".json");
 					URLConnection conn = url.openConnection();
 					conn.connect();
 

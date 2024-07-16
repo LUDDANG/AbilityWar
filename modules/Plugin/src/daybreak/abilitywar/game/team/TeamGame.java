@@ -15,7 +15,6 @@ import daybreak.abilitywar.game.team.event.TeamCreatedEvent;
 import daybreak.abilitywar.game.team.event.TeamRemovedEvent;
 import daybreak.abilitywar.game.team.interfaces.Members;
 import daybreak.abilitywar.game.team.interfaces.Teamable;
-import daybreak.abilitywar.utils.base.Messager;
 import daybreak.abilitywar.utils.base.concurrent.SimpleTimer;
 import daybreak.abilitywar.utils.base.concurrent.TimeUnit;
 import daybreak.abilitywar.utils.base.language.korean.KoreanUtil;
@@ -423,7 +422,6 @@ public abstract class TeamGame extends Game implements Teamable {
 	public interface Winnable extends daybreak.abilitywar.game.interfaces.Winnable {
 		default void Win(final Members winTeam) {
 			if (!isRunning()) return;
-			Messager.clearChat();
 			for (AbstractGame.Participant member : winTeam.getMembers()) {
 				SoundLib.UI_TOAST_CHALLENGE_COMPLETE.playSound(member.getPlayer());
 				new SimpleTimer(TaskType.REVERSE, 8) {
@@ -433,7 +431,7 @@ public abstract class TeamGame extends Game implements Teamable {
 					}
 				}.setPeriod(TimeUnit.TICKS, 4).start();
 			}
-			Bukkit.broadcastMessage("§5§l우승자§f: §d" + winTeam + ".");
+			Bukkit.broadcastMessage("§5§l우승팀§f: §d" + winTeam + ".");
 			stop();
 			Bukkit.getPluginManager().callEvent(new GameWinEvent((AbstractGame) this, new TeamWinner(winTeam)));
 		}

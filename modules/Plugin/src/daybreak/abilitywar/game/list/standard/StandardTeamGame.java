@@ -3,29 +3,43 @@ package daybreak.abilitywar.game.list.standard;
 import com.google.common.base.Strings;
 import daybreak.abilitywar.AbilityWar;
 import daybreak.abilitywar.config.Configuration.Settings;
+import daybreak.abilitywar.config.serializable.SpawnLocation;
+import daybreak.abilitywar.game.AbstractGame;
+import daybreak.abilitywar.game.Game;
 import daybreak.abilitywar.game.event.GameCreditEvent;
 import daybreak.abilitywar.game.manager.AbilityList;
 import daybreak.abilitywar.game.manager.object.DefaultKitHandler;
+import daybreak.abilitywar.game.module.DeathManager;
 import daybreak.abilitywar.game.module.InfiniteDurability;
 import daybreak.abilitywar.game.script.manager.ScriptManager;
 import daybreak.abilitywar.game.team.TeamGame;
+import daybreak.abilitywar.game.team.interfaces.Members;
 import daybreak.abilitywar.utils.base.Messager;
 import daybreak.abilitywar.utils.base.Seasons;
 import daybreak.abilitywar.utils.base.minecraft.PlayerCollector;
+import daybreak.abilitywar.utils.base.minecraft.nms.NMS;
 import daybreak.abilitywar.utils.library.SoundLib;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.List;
 
 
-public class StandardTeamGame extends TeamGame implements DefaultKitHandler {
+public class StandardTeamGame extends TeamGame implements DefaultKitHandler, TeamGame.Winnable, AbstractGame.Observer {
 
 	public StandardTeamGame(final String[] args) {
 		super(PlayerCollector.EVERY_PLAYER_EXCLUDING_SPECTATORS(), args);
 		setRestricted(Settings.InvincibilitySettings.isEnabled());
+		attachObserver(this);
+		Bukkit.getPluginManager().registerEvents(this, AbilityWar.getPlugin());
 	}
 
 	@Override
@@ -54,8 +68,8 @@ public class StandardTeamGame extends TeamGame implements DefaultKitHandler {
 			case 3:
 				lines = Messager.asList(
 						"§cAbilityWar §f- §6능력자 전쟁",
-						"§e버전 §7: §f" + AbilityWar.getPlugin().getDescription().getVersion(),
-						"§b개발자 §7: §fDaybreak 새벽",
+						"§e버전 §7: §f" + AbilityWar.getPlugin().getDescription().getVersion() + "-ludongbu",
+						"§b개발자 §7: §fDaybreak 새벽, Eunhak Lee 고구마",
 						"§9디스코드 §7: §fsaebyeog"
 				);
 
@@ -156,7 +170,109 @@ public class StandardTeamGame extends TeamGame implements DefaultKitHandler {
 
 				startGame();
 				break;
+			case 16:
+				checkWinner();
+				break;
 		}
 	}
 
+	@EventHandler
+	private void onInteractAtDiamondBlock(PlayerInteractEvent event) {
+		Block clickedBlock = event.getClickedBlock();
+		if (clickedBlock == null) return;
+		else if (!isGameStarted()) return;
+		else if (!isParticipating(event.getPlayer())) return;
+		else if (clickedBlock.getType() != Material.DIAMOND_BLOCK) return;
+
+		EquipmentSlot hand = event.getHand();
+		if (hand == null) return;
+
+		ItemStack itemInHand = event.getPlayer().getInventory().getItem(hand);
+		if (!itemInHand.getType().getKey().toString().toLowerCase().contains("pickaxe")) return;
+
+		SoundLib.BLOCK_NOTE_BLOCK_BELL.playSound(event.getPlayer());
+		NMS.sendActionbar(event.getPlayer(), ChatColor.RED + "" + ChatColor.BOLD + "다이아몬드 블록은 맨 손으로만 캘 수있습니다", 20, 40, 20);
+		event.setCancelled(true);
+	}
+
+	@EventHandler
+	private void onBlockBreak(BlockBreakEvent event) {
+		if (!isGameStarted()) return;
+		else if (event.getBlock().getType() != Material.DIAMOND_BLOCK) return;
+		else if (!isParticipating(event.getPlayer())) return;
+
+		Members nearestTeam = getNearestTeam(event);
+		SoundLib.ENTITY_ENDER_DRAGON_GROWL.broadcastSound(0.5f);
+		Bukkit.broadcastMessage("");
+		Bukkit.broadcastMessage("§l§f   " + nearestTeam.getDisplayName() + ChatColor.GOLD + " 팀 탈락");
+		Bukkit.broadcastMessage("");
+
+		for (AbstractGame.Participant member : nearestTeam.getMembers()) {
+			((ManuallyExcludableDeathManager) getDeathManager()).excludePlayer(member);
+			member.getPlayer().setGameMode(GameMode.SPECTATOR);
+		}
+		if (isGameStarted()) checkWinner();
+	}
+
+	private @NotNull Members getNearestTeam(BlockBreakEvent event) {
+		Location loc = event.getBlock().getLocation();
+
+		double minDistance = Double.MAX_VALUE;
+		Members nearestTeam = null;
+
+		for (Members team : getTeams()) {
+			if (team.isExcluded()) continue;
+
+			SpawnLocation spawnLoc = team.getSpawn();
+			double distanceSquared = Math.pow(loc.getX() - spawnLoc.x, 2) + Math.pow(loc.getY() - spawnLoc.y, 2) + Math.pow(loc.getZ() - spawnLoc.z, 2);
+
+			if (distanceSquared < minDistance) {
+				nearestTeam = team;
+				minDistance = distanceSquared;
+			}
+		}
+
+		assert nearestTeam != null;
+		return nearestTeam;
+	}
+
+	private void checkWinner() {
+		Members winTeam = null;
+		for (Members team : getTeams()) {
+			if (!team.isExcluded()) {
+				if (winTeam == null) {
+					winTeam = team;
+				} else {
+					return;
+				}
+			}
+		}
+		if (winTeam != null) {
+			Win(winTeam);
+		} else {
+			Win("§f없음 §8(§7무승부§8)");
+		}
+	}
+
+	@Override
+	public void update(GameUpdate update) {
+		if (update == GameUpdate.END) {
+			HandlerList.unregisterAll(this);
+		}
+	}
+
+	@Override
+	protected @NotNull DeathManager newDeathManager() {
+		return new ManuallyExcludableDeathManager(this);
+	}
+
+	private static class ManuallyExcludableDeathManager extends DeathManager {
+		public ManuallyExcludableDeathManager(Game game) {
+			super(game);
+		}
+
+		protected void excludePlayer(final AbstractGame.Participant participant) {
+			excludedPlayers.add(participant.getPlayer().getUniqueId());
+		}
+	}
 }

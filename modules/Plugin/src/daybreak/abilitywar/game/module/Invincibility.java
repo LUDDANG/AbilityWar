@@ -176,7 +176,7 @@ public class Invincibility implements Module {
 			}
 			game.setRestricted(false);
 			Bukkit.broadcastMessage(ChatColor.GREEN + "무적이 해제되었습니다. 지금부터 대미지를 입습니다.");
-			SoundLib.ENTITY_ENDER_DRAGON_GROWL.broadcastSound(2.5f);
+			SoundLib.ENTITY_ENDER_DRAGON_GROWL.broadcastSound(0.75f);
 			Bukkit.getPluginManager().callEvent(new InvincibilityStatusChangeEvent(game, false));
 		}
 
