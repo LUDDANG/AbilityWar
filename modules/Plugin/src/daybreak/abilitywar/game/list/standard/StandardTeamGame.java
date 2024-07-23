@@ -22,9 +22,11 @@ import daybreak.abilitywar.utils.library.SoundLib;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -174,6 +176,20 @@ public class StandardTeamGame extends TeamGame implements DefaultKitHandler, Tea
 				checkWinner();
 				break;
 		}
+	}
+
+	@EventHandler(priority = EventPriority.LOWEST)
+	private void onRespawn(PlayerRespawnEvent event) {
+		if (!isParticipating(event.getPlayer())) return;
+
+		Participant participant = getParticipant(event.getPlayer());
+		Members team = participant.getTeam();
+		if (team == null) return;
+
+		SpawnLocation loc = team.getSpawn();
+		if (loc == null) return;
+
+		event.setRespawnLocation(loc.toBukkitLocation());
 	}
 
 	@EventHandler
