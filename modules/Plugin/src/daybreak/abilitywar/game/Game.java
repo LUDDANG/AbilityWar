@@ -65,7 +65,7 @@ public abstract class Game extends AbstractGame implements AbilitySelect.Handler
 		@EventHandler
 		private void onFoodLevelChange(final FoodLevelChangeEvent e) {
 			if (Settings.getNoHunger()) {
-				e.setFoodLevel(19);
+				e.setFoodLevel(20);
 			}
 		}
 
