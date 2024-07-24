@@ -38,7 +38,7 @@ import java.util.List;
 public class StandardTeamGame extends TeamGame implements DefaultKitHandler, TeamGame.Winnable, AbstractGame.Observer {
 
 	public StandardTeamGame(final String[] args) {
-		super(PlayerCollector.EVERY_PLAYER_EXCLUDING_SPECTATORS(), args);
+		super(PlayerCollector.EVERY_PLAYER_EXCLUDING_SPECTATORS_ALSO_SPECTATE_MODES(), args);
 		setRestricted(Settings.InvincibilitySettings.isEnabled());
 		attachObserver(this);
 		Bukkit.getPluginManager().registerEvents(this, AbilityWar.getPlugin());
