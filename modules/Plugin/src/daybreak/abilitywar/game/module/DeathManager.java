@@ -3,9 +3,11 @@ package daybreak.abilitywar.game.module;
 import daybreak.abilitywar.AbilityWar;
 import daybreak.abilitywar.config.Configuration.Settings.DeathSettings;
 import daybreak.abilitywar.config.enums.OnDeath;
+import daybreak.abilitywar.config.serializable.SpawnLocation;
 import daybreak.abilitywar.game.AbstractGame.Participant;
 import daybreak.abilitywar.game.Game;
 import daybreak.abilitywar.game.event.participant.ParticipantDeathEvent;
+import daybreak.abilitywar.game.team.TeamGame;
 import daybreak.abilitywar.utils.base.Messager;
 import daybreak.abilitywar.utils.base.language.korean.KoreanUtil;
 import daybreak.abilitywar.utils.base.minecraft.entity.death.Deaths;
@@ -19,6 +21,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -94,6 +97,7 @@ public class DeathManager implements ListenerModule {
 						@Override
 						public void run() {
 							NMS.respawn(victim.getPlayer());
+							tryTeleportToTeamSpawn(victim);
 						}
 					}.runTaskLater(AbilityWar.getPlugin(), 2L);
 				}
@@ -104,10 +108,19 @@ public class DeathManager implements ListenerModule {
 						@Override
 						public void run() {
 							NMS.respawn(victim.getPlayer());
+							tryTeleportToTeamSpawn(victim);
 						}
 					}.runTaskLater(AbilityWar.getPlugin(), 2L);
 				}
 				break;
+		}
+	}
+
+	private void tryTeleportToTeamSpawn(Participant player) {
+		try {
+			SpawnLocation loc = Objects.requireNonNull(((TeamGame) game).getTeam(player)).getSpawn();
+			player.getPlayer().teleport(loc.toBukkitLocation());
+		} catch (Exception ignored) {
 		}
 	}
 
